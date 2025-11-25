@@ -69,7 +69,7 @@ def load_database():
 st.sidebar.title("Navigation")
 page = st.sidebar.radio(
     "Select Function:",
-    ["RO/DO Decision", "Inventory Management", "Sales Analysis", "Reports", "Settings"],
+    ["ISC _ DO system tracking", "Inventory Management", "Sales Analysis", "Reports", "Settings"],
     index=0
 )
 
@@ -77,10 +77,10 @@ st.sidebar.markdown("---")
 st.sidebar.info(f"Current Page: **{page}**")
 
 # Main content based on selection
-if page == "RO/DO Decision":
+if page == "ISC _ DO system tracking":
     # ========== RO/DO DECISION PAGE ==========
-    st.title("RO/DO Decision System")
-    st.markdown("Check if ordering is required based on stock and average consumption")
+    st.title("ISC _ DO system tracking")
+    # st.markdown("Check if ordering is required based on stock and average consumption")
     st.markdown("---")
     
     # Load data
@@ -122,23 +122,23 @@ if page == "RO/DO Decision":
         )
         
         stock_input = st.number_input(
-            "Finished Stock:",
+            "Pick to Light Stock:",
             min_value=0.0,
             value=None,
             step=1.0,
             format="%.0f",
-            placeholder="Enter finished stock",
+            placeholder="Enter pick to light stock",
             help="Numbers only",
             key="stock_input"
         )
         
         ro_input = st.number_input(
-            "RO Quantity:",
+            "Requested Quantity:",
             min_value=0.0,
             value=None,
             step=1.0,
             format="%.0f",
-            placeholder="Enter RO quantity",
+            placeholder="Enter requested quantity",
             help="Numbers only",
             key="ro_input"
         )
