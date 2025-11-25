@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
 import os
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration
 st.set_page_config(
@@ -11,6 +16,12 @@ st.set_page_config(
 )
 
 DATA_FOLDER = "data"
+# Load DATABASE_URL from .env file (không commit password lên git!)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    st.error("⚠️ DATABASE_URL not found in .env file!")
+    st.stop()
 
 # Custom CSS to hide number input spinners and prevent non-numeric input
 st.markdown("""
@@ -30,61 +41,28 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 # Load database
 @st.cache_data
 def load_database():
-    """Load all Excel files and extract Item Code and Avg Consume columns"""
-    all_data = []
-    errors = []
-    
-    if not os.path.exists(DATA_FOLDER):
-        return None, ["Folder 'data' does not exist"]
-    
-    excel_files = [f for f in os.listdir(DATA_FOLDER) if f.endswith(('.xlsx', '.xls'))]
-    
-    if len(excel_files) == 0:
-        return None, ["No Excel files found in 'data' folder"]
-    
-    for file in excel_files:
-        try:
-            file_path = os.path.join(DATA_FOLDER, file)
-            df = pd.read_excel(file_path, header=1)
-            
-            item_col = None
-            for col in df.columns:
-                col_lower = col.lower().strip()
-                if 'item' in col_lower and 'code' in col_lower:
-                    item_col = col
-                    break
-                elif 'item' in col_lower:
-                    item_col = col
-            
-            avg_col = None
-            for col in df.columns:
-                col_lower = col.lower().strip()
-                if 'avg' in col_lower and 'consume' in col_lower:
-                    avg_col = col
-                    break
-                elif 'consume' in col_lower:
-                    avg_col = col
-            
-            if item_col and avg_col:
-                df_filtered = df[[item_col, avg_col]].copy()
-                df_filtered.columns = ['Item_Code', 'Avg_Consume']
-                df_filtered = df_filtered.dropna()
-                all_data.append(df_filtered)
-            else:
-                errors.append(f"File '{file}': Could not find required columns (Item Code: {item_col}, Avg Consume: {avg_col})")
-        except Exception as e:
-            errors.append(f"File '{file}': {str(e)}")
-    
-    if len(all_data) == 0:
-        return None, errors if errors else ["No valid data found in Excel files"]
-    
-    combined = pd.concat(all_data, ignore_index=True)
-    combined = combined.drop_duplicates(subset=['Item_Code'], keep='first')
-    
+    """Load data from Supabase PostgreSQL"""
+    try:
+        # Kết nối Supabase
+        engine = create_engine(DATABASE_URL)
+        
+        # Đọc data từ bảng ro_items
+        query = "SELECT item_code, avg_consume FROM ro_items ORDER BY item_code"
+        df = pd.read_sql(query, engine)
+        
+        # Đổi tên cột để khớp với code cũ
+        df.columns = ['Item_Code', 'Avg_Consume']
+        
+        # Loại bỏ dòng trống
+        df = df.dropna()
+        
+        return df, []
+        
+    except Exception as e:
+        return None, [f"Lỗi kết nối Supabase: {str(e)}"]
     return combined, []
 
 # Sidebar Navigation
@@ -143,23 +121,13 @@ if page == "RO/DO Decision":
             key="item_code_select"
         )
         
-        item_code_manual = st.text_input(
-            "Or type Item Code:",
-            placeholder="e.g., ITEM001",
-            key="item_code_manual",
-            autocomplete="off"
-        )
-        
-        if item_code_manual:
-            item_code = item_code_manual
-        
         stock_input = st.number_input(
             "Finished Stock:",
             min_value=0.0,
             value=None,
             step=1.0,
             format="%.0f",
-            placeholder="Enter stock quantity",
+            placeholder="Enter finished stock",
             help="Numbers only",
             key="stock_input"
         )

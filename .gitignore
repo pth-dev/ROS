@@ -1,6 +1,9 @@
 # Ignore data folder
 data/
 
+# Environment variables (SECRET!)
+.env
+
 # Python
 __pycache__/
 *.py[cod]
