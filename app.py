@@ -46,19 +46,11 @@ st.markdown("""
 def load_database():
     """Load data from Supabase PostgreSQL"""
     try:
-        # Kết nối Supabase
         engine = create_engine(DATABASE_URL)
-        
-        # Đọc data từ bảng ro_items
         query = "SELECT item_code, avg_consume FROM ro_items ORDER BY item_code"
         df = pd.read_sql(query, engine)
-        
-        # Đổi tên cột để khớp với code cũ
         df.columns = ['Item_Code', 'Avg_Consume']
-        
-        # Loại bỏ dòng trống
         df = df.dropna()
-        
         return df, []
         
     except Exception as e:
@@ -125,8 +117,8 @@ if page == "ISC _ DO system tracking":
             "Pick to Light Stock:",
             min_value=0.0,
             value=None,
-            step=1.0,
-            format="%.0f",
+            step=0.001,
+            format="%g",
             placeholder="Enter pick to light stock",
             help="Numbers only",
             key="stock_input"
@@ -136,8 +128,8 @@ if page == "ISC _ DO system tracking":
             "Requested Quantity:",
             min_value=0.0,
             value=None,
-            step=1.0,
-            format="%.0f",
+            step=0.001,
+            format="%g",
             placeholder="Enter requested quantity",
             help="Numbers only",
             key="ro_input"
